@@ -1,6 +1,7 @@
 {
-  "name": "focus",
+  "name": "focusme",
   "version": "0.1.0",
+  "description": "manage tasks efficiently",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -8,19 +9,29 @@
     "start": "next start",
     "lint": "next lint"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Phastboy/FocusMe.git"
+  },
+  "author": "Hammed Anuoluwapo Pelumi (Phastboy)",
+  "bugs": {
+    "url": "https://github.com/Phastboy/FocusMe/issues"
+  },
+  "homepage": "https://github.com/Phastboy/FocusMe#readme",
   "dependencies": {
+    "@clerk/nextjs": "^5.1.3",
+    "next": "14.2.3",
     "react": "^18",
-    "react-dom": "^18",
-    "next": "14.2.3"
+    "react-dom": "^18"
   },
   "devDependencies": {
-    "typescript": "^5",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.3",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "eslint": "^8",
-    "eslint-config-next": "14.2.3"
+    "typescript": "^5"
   }
 }
