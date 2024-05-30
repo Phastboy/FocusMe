@@ -7,6 +7,10 @@ import {
   PUT as updateTask,
   DELETE as deleteTask,
 } from "@/app/api/tasks/[taskId]/route";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
 // Utility function to create NextRequest objects
 function createNextRequest(
@@ -14,7 +18,7 @@ function createNextRequest(
   method: string,
   body?: any,
 ): NextRequest {
-  return new NextRequest(url, {
+  return new NextRequest(`${BASE_URL}${url}`, {
     method,
     ...(body && { body: JSON.stringify(body) }),
     headers: {
@@ -30,7 +34,6 @@ export async function fetchAllTasks() {
     const data = await response.json();
     if (!response.ok)
       throw new Error(data.response.message || "Failed to fetch tasks");
-    console.log("Tasks fetched successfully:", data.response.tasks);
     return data.response.tasks;
   } catch (error: any) {
     console.error("Error fetching tasks:", error.message);
@@ -51,7 +54,7 @@ export async function createTask(taskData: {
     const data = await response.json();
     if (!response.ok)
       throw new Error(data.response.message || "Failed to create task");
-    console.log("Task created successfully:", data.response.task);
+    revalidatePath("/tasks");
     return data.response.task;
   } catch (error: any) {
     console.error("Error creating task:", error.message);
@@ -67,7 +70,6 @@ export async function fetchTaskById(taskId: string) {
     const data = await response.json();
     if (!response.ok)
       throw new Error(data.response.message || "Failed to fetch task");
-    console.log("Task fetched successfully:", data.response.task);
     return data.response.task;
   } catch (error: any) {
     console.error(`Error fetching task with ID ${taskId}:`, error.message);
@@ -85,13 +87,22 @@ export async function modifyTask(
     dueDate?: Date;
   },
 ) {
+  if (
+    !taskData.name &&
+    !taskData.description &&
+    taskData.completed === undefined &&
+    !taskData.dueDate
+  ) {
+    console.error("No fields provided to update task");
+    return null;
+  }
   try {
     const request = createNextRequest(`/api/tasks/${taskId}`, "PUT", taskData);
     const response = await updateTask(request);
     const data = await response.json();
     if (!response.ok)
       throw new Error(data.response.message || "Failed to update task");
-    console.log("Task updated successfully:", data.response.task);
+    revalidatePath("/tasks");
     return data.response.task;
   } catch (error: any) {
     console.error(`Error updating task with ID ${taskId}:`, error.message);
@@ -107,8 +118,7 @@ export async function removeTask(taskId: string) {
     const data = await response.json();
     if (!response.ok)
       throw new Error(data.response.message || "Failed to delete task");
-    console.log("Task deleted successfully:", data.response.message);
-    return true;
+    redirect("/tasks");
   } catch (error: any) {
     console.error(`Error deleting task with ID ${taskId}:`, error.message);
     return false;

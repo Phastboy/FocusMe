@@ -1,25 +1,32 @@
 // src/components/ui/taskCard.tsx
-import React from "react";
-import { useRouter } from "next/router";
-import UpdateForm from "@/components/forms/updateForm";
+"use client";
+import React, { useState } from "react";
+import Link from "next/link";
+import UpdateFormButton from "@/components/ui/updateFormButton";
 import Button from "@/components/ui/button";
-import { removeTask } from "@/utils/actions";
+import { removeTask, modifyTask } from "@/utils/actions";
+import { ITask } from "@/types";
 
-const TaskCard: React.FC<{ task: any }> = ({ task }) => {
-  const router = useRouter();
+const TaskCard: React.FC<{ task: ITask }> = ({ task }) => {
+  const [completed, setCompleted] = useState(task.completed);
 
   const handleDelete = async () => {
-    await removeTask(task._id);
-    // Refresh or update the UI as necessary
+    await removeTask(task._id as string);
+  };
+
+  const handleCheckboxChange = async () => {
+    const updatedTask = await modifyTask(task._id as string, {
+      completed: !completed,
+    });
+    if (updatedTask) {
+      setCompleted(updatedTask.completed);
+    }
   };
 
   return (
     <div className="task-card border p-4 rounded-md shadow-md">
-      <h3
-        className="text-lg font-bold cursor-pointer"
-        onClick={() => router.push(`/tasks/${task._id}`)}
-      >
-        {task.name}
+      <h3 className="text-lg font-bold cursor-pointer">
+        <Link href={`/task/${task._id}`}>{task.name}</Link>
       </h3>
       <p>{task.description}</p>
       <p>
@@ -32,14 +39,14 @@ const TaskCard: React.FC<{ task: any }> = ({ task }) => {
         Status:
         <input
           type="checkbox"
-          checked={task.completed}
-          readOnly
+          checked={completed}
+          onChange={handleCheckboxChange}
           className="ml-2"
         />
-        {task.completed ? "Completed" : "Incomplete"}
+        {completed ? "Completed" : "Incomplete"}
       </p>
       <div className="flex justify-between mt-4">
-        <UpdateForm taskId={task._id} />
+        <UpdateFormButton taskId={task._id as string} />
         <Button variant="danger" onClick={handleDelete}>
           Delete
         </Button>
