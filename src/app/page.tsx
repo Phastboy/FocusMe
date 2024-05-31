@@ -1,3 +1,4 @@
+// src/app/page.tsx
 import { SignInButton } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
