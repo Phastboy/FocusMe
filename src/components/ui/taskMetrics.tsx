@@ -1,7 +1,7 @@
 // src/components/ui/taskMetrics.tsx
 "use client";
 import React, { useEffect, useState } from "react";
-import { fetchAllTasks } from "@/utils/actions";
+import { fetchTasks } from "@/utils/actions";
 import { ITask } from "@/types";
 import TaskList from "@/components/ui/taskList";
 
@@ -11,38 +11,56 @@ const TaskMetrics: React.FC = () => {
   const [incompleteCount, setIncompleteCount] = useState<number>(0);
   const [overdueCount, setOverdueCount] = useState<number>(0);
   const [closestDueTasks, setClosestDueTasks] = useState<ITask[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const getTasks = async () => {
-      const fetchedTasks: ITask[] = await fetchAllTasks();
-      setTasks(fetchedTasks);
-      setCompletedCount(
-        fetchedTasks.filter((task: ITask) => task.completed).length,
-      );
-      setIncompleteCount(
-        fetchedTasks.filter((task: ITask) => !task.completed).length,
-      );
-      setOverdueCount(
-        fetchedTasks.filter(
-          (task: ITask) =>
-            task.dueDate &&
-            new Date(task.dueDate) < new Date() &&
-            !task.completed,
-        ).length,
-      );
+      try {
+        const fetchedTasks: ITask[] = await fetchTasks();
+        if (Array.isArray(fetchedTasks)) {
+          setTasks(fetchedTasks);
+          setCompletedCount(
+            fetchedTasks.filter((task: ITask) => task.completed).length,
+          );
+          setIncompleteCount(
+            fetchedTasks.filter((task: ITask) => !task.completed).length,
+          );
+          setOverdueCount(
+            fetchedTasks.filter(
+              (task: ITask) =>
+                task.dueDate &&
+                new Date(task.dueDate) < new Date() &&
+                !task.completed,
+            ).length,
+          );
 
-      const sortedTasks = fetchedTasks
-        .filter((task: ITask) => task.dueDate && !task.completed)
-        .sort(
-          (a: ITask, b: ITask) =>
-            new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime(),
-        )
-        .slice(0, 5);
-      setClosestDueTasks(sortedTasks);
+          const sortedTasks = fetchedTasks
+            .filter((task: ITask) => task.dueDate && !task.completed)
+            .sort(
+              (a: ITask, b: ITask) =>
+                new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime(),
+            )
+            .slice(0, 5);
+          setClosestDueTasks(sortedTasks);
+        } else {
+          setError("Failed to fetch tasks: Invalid response format");
+        }
+      } catch (error: any) {
+        setError(error.message || "Failed to fetch tasks");
+      }
     };
 
     getTasks();
   }, []);
+
+  if (error) {
+    return (
+      <div className="task-metrics border p-6 rounded-md shadow-md bg-white">
+        <h2 className="text-2xl font-bold mb-4 text-gray-700">Task Metrics</h2>
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="task-metrics border p-6 rounded-md shadow-md bg-white">

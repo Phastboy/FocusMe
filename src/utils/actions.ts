@@ -1,5 +1,6 @@
 // src/utils/actions.ts: Next.js server-side functions to interact with the API
 "use server";
+
 import { NextRequest } from "next/server";
 import { GET as getAllTask, POST as postTask } from "@/app/api/tasks/route";
 import {
@@ -8,121 +9,85 @@ import {
   DELETE as deleteTask,
 } from "@/app/api/tasks/[taskId]/route";
 import { revalidatePath } from "next/cache";
-
+import { ITask } from "@/types";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
-// Utility function to create NextRequest objects
-function createNextRequest(
-  url: string,
-  method: string,
-  body?: any,
-): NextRequest {
-  return new NextRequest(`${BASE_URL}${url}`, {
-    method,
-    ...(body && { body: JSON.stringify(body) }),
-    headers: {
-      "Content-Type": "application/json",
-    },
+const customFetch = async (handler: Function, options: any = {}) => {
+  const { userId } = auth();
+  console.log({ userId });
+
+  if (!userId) {
+    redirect("/sign-in");
+  }
+  const headers = {
+    ...(options.headers || {}),
+    "Content-Type": "application/json",
+  };
+
+  return handler(new NextRequest(options.url, { headers, ...options }));
+};
+
+export const fetchTasks = async (): Promise<ITask[]> => {
+  const response = await customFetch(getAllTask, {
+    method: "GET",
+    url: `${BASE_URL}/api/tasks`,
   });
-}
 
-// Function to get all tasks
-export async function fetchAllTasks() {
-  try {
-    const response = await getAllTask();
-    const data = await response.json();
-    if (!response.ok)
-      throw new Error(data.response.message || "Failed to fetch tasks");
+  const data = await response.json();
+  console.log(data);
+
+  if (response.ok && data.response.success) {
     return data.response.tasks;
-  } catch (error: any) {
-    console.error("Error fetching tasks:", error.message);
-    return [];
+  } else {
+    throw new Error(data.response.message || "Failed to fetch tasks");
   }
-}
+};
 
-// Function to create a new task
-export async function createTask(taskData: {
-  name: string;
-  description?: string;
-  completed?: boolean;
-  dueDate?: Date;
-}) {
-  try {
-    const request = createNextRequest("/api/tasks", "POST", taskData);
-    const response = await postTask(request);
-    const data = await response.json();
-    if (!response.ok)
-      throw new Error(data.response.message || "Failed to create task");
+export const createTask = async (task: Partial<ITask>): Promise<ITask> => {
+  const response = await customFetch(postTask, {
+    method: "POST",
+    url: `${BASE_URL}/api/tasks`,
+    body: JSON.stringify(task),
+  });
+  const data = await response.json();
+  if (response.ok) {
+    revalidatePath("/dashboard");
     revalidatePath("/tasks");
-    revalidatePath(`/dashboard`);
     return data.response.task;
-  } catch (error: any) {
-    console.error("Error creating task:", error.message);
-    return null;
+  } else {
+    throw new Error(data.response.message || "Failed to create task");
   }
-}
+};
 
-// Function to get a task by ID
-export async function fetchTaskById(taskId: string) {
-  try {
-    const request = createNextRequest(`/api/tasks/${taskId}`, "GET");
-    const response = await getTaskById(request);
-    const data = await response.json();
-    if (!response.ok)
-      throw new Error(data.response.message || "Failed to fetch task");
-    return data.response.task;
-  } catch (error: any) {
-    console.error(`Error fetching task with ID ${taskId}:`, error.message);
-    return null;
-  }
-}
-
-// Function to update a task
-export async function modifyTask(
+export const modifyTask = async (
   taskId: string,
-  taskData: {
-    name?: string;
-    description?: string;
-    completed?: boolean;
-    dueDate?: Date;
-  },
-) {
-  if (
-    !taskData.name &&
-    !taskData.description &&
-    taskData.completed === undefined &&
-    !taskData.dueDate
-  ) {
-    console.error("No fields provided to update task");
-    return null;
-  }
-  try {
-    const request = createNextRequest(`/api/tasks/${taskId}`, "PUT", taskData);
-    const response = await updateTask(request);
-    const data = await response.json();
-    if (!response.ok)
-      throw new Error(data.response.message || "Failed to update task");
+  task: Partial<ITask>,
+): Promise<ITask> => {
+  const response = await customFetch(updateTask, {
+    method: "PUT",
+    url: `${BASE_URL}/api/tasks/${taskId}`,
+    body: JSON.stringify(task),
+  });
+  const data = await response.json();
+  if (response.ok) {
+    revalidatePath("/dashboard");
     revalidatePath("/tasks");
-    revalidatePath(`/dashboard`);
-    return data.response.task;
-  } catch (error: any) {
-    console.error(`Error updating task with ID ${taskId}:`, error.message);
-    return null;
+    return data.task;
+  } else {
+    throw new Error(data.response.message || "Failed to update task");
   }
-}
+};
 
-// Function to delete a task
-export async function removeTask(taskId: string) {
-  try {
-    const request = createNextRequest(`/api/tasks/${taskId}`, "DELETE");
-    const response = await deleteTask(request);
+export const removeTask = async (taskId: string): Promise<void> => {
+  const response = await customFetch(deleteTask, {
+    method: "DELETE",
+    url: `${BASE_URL}/api/tasks/${taskId}`,
+  });
+  if (!response.ok) {
     const data = await response.json();
-    if (!response.ok)
-      throw new Error(data.response.message || "Failed to delete task");
-    revalidatePath("/tasks");
-    revalidatePath(`/dashboard`);
-  } catch (error: any) {
-    console.error(`Error deleting task with ID ${taskId}:`, error.message);
-    return false;
+    throw new Error(data.response.message || "Failed to delete task");
   }
-}
+  redirect("/dashboard");
+};

@@ -1,38 +1,22 @@
 // src/models/task.ts
 import mongoose, { Schema, Document } from "mongoose";
+import { User } from "@clerk/nextjs/server";
 
 interface ITask extends Document {
   name: string;
   description?: string;
-  completed: boolean;
+  completed?: boolean;
   dueDate?: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  user: string;
 }
 
-const taskSchema: Schema = new Schema<ITask>(
-  {
-    name: {
-      type: String,
-      required: [true, "Task name is required"],
-    },
-    description: {
-      type: String,
-      default: "",
-    },
-    completed: {
-      type: Boolean,
-      default: false,
-    },
-    dueDate: {
-      type: Date,
-    },
-  },
-  {
-    timestamps: true,
-  },
-);
+const TaskSchema: Schema = new Schema({
+  name: { type: String, required: true },
+  description: { type: String },
+  completed: { type: Boolean, default: false },
+  dueDate: { type: Date },
+  user: { type: String, ref: "User", required: true },
+});
 
-const Task = mongoose.models.Task || mongoose.model<ITask>("Task", taskSchema);
-
-export default Task;
+export default mongoose.models.Task ||
+  mongoose.model<ITask>("Task", TaskSchema);
