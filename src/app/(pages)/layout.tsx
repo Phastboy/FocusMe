@@ -6,7 +6,7 @@ import Link from "next/link";
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="bg-gray-800 text-white p-4 flex justify-between items-center">
+      <header className="bg-gray-800 text-white p-4 flex justify-between items-center fixed w-full z-10">
         <nav className="flex space-x-4">
           <Link href="/dashboard" className="hover:underline">
             Home
@@ -20,7 +20,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </nav>
         <CreateTaskFormButton />
       </header>
-      <main className="flex-1 p-4">{children}</main>
+      <main className="flex-1 p-4 mt-16">{children}</main>
     </div>
   );
 };

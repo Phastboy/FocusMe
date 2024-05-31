@@ -8,7 +8,6 @@ import {
   DELETE as deleteTask,
 } from "@/app/api/tasks/[taskId]/route";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
@@ -55,6 +54,7 @@ export async function createTask(taskData: {
     if (!response.ok)
       throw new Error(data.response.message || "Failed to create task");
     revalidatePath("/tasks");
+    revalidatePath(`/dashboard`);
     return data.response.task;
   } catch (error: any) {
     console.error("Error creating task:", error.message);
@@ -103,6 +103,7 @@ export async function modifyTask(
     if (!response.ok)
       throw new Error(data.response.message || "Failed to update task");
     revalidatePath("/tasks");
+    revalidatePath(`/dashboard`);
     return data.response.task;
   } catch (error: any) {
     console.error(`Error updating task with ID ${taskId}:`, error.message);
@@ -118,7 +119,8 @@ export async function removeTask(taskId: string) {
     const data = await response.json();
     if (!response.ok)
       throw new Error(data.response.message || "Failed to delete task");
-    redirect("/tasks");
+    revalidatePath("/tasks");
+    revalidatePath(`/dashboard`);
   } catch (error: any) {
     console.error(`Error deleting task with ID ${taskId}:`, error.message);
     return false;

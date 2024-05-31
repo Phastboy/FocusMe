@@ -25,14 +25,6 @@ const Button: React.FC<ButtonProps> = ({
   if (!onClick) {
     return;
   }
-  const handleClick = async () => {
-    if (disabled || loading) return;
-    try {
-      await onClick();
-    } catch (error) {
-      console.error("Button click failed:", error);
-    }
-  };
 
   const baseClasses =
     "px-4 py-2 rounded-md focus:outline-none transition duration-150 ease-in-out";
@@ -47,7 +39,7 @@ const Button: React.FC<ButtonProps> = ({
   return (
     <button
       type={type}
-      onClick={handleClick}
+      onClick={onClick}
       className={clsx(baseClasses, variantClasses, className)}
       disabled={disabled || loading}
       {...props}
