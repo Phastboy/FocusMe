@@ -1,7 +1,6 @@
 // src/components/ui/taskCard.tsx
 "use client";
 import React, { useState } from "react";
-import Link from "next/link";
 import UpdateFormButton from "@/components/ui/updateFormButton";
 import Button from "@/components/ui/button";
 import { removeTask, modifyTask } from "@/utils/actions";
@@ -9,17 +8,24 @@ import { ITask } from "@/types";
 
 const TaskCard: React.FC<{ task: ITask }> = ({ task }) => {
   const [completed, setCompleted] = useState(task.completed);
+  const [loading, setLoading] = useState(false);
 
   const handleDelete = async () => {
     await removeTask(task._id as string);
   };
 
   const handleCheckboxChange = async () => {
-    const updatedTask = await modifyTask(task._id as string, {
-      completed: !completed,
-    });
-    if (updatedTask) {
-      setCompleted(updatedTask.completed);
+    setLoading(true);
+    try {
+      setCompleted(!completed);
+      await modifyTask(task._id as string, {
+        completed: !completed,
+      });
+    } catch (error) {
+      console.error(error);
+      setCompleted(completed);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -39,6 +45,7 @@ const TaskCard: React.FC<{ task: ITask }> = ({ task }) => {
           type="checkbox"
           checked={completed}
           onChange={handleCheckboxChange}
+          disabled={loading}
           className="ml-2"
         />
         {completed ? "Completed" : "Incomplete"}
