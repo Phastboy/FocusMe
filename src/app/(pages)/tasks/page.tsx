@@ -1,4 +1,4 @@
-// src/app/tasks/page.tsx
+// src/app/(pages)tasks/page.tsx
 import React from "react";
 import TaskList from "@/components/ui/taskList";
 import { fetchAllTasks } from "@/utils/actions";
