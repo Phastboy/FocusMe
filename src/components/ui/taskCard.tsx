@@ -25,9 +25,7 @@ const TaskCard: React.FC<{ task: ITask }> = ({ task }) => {
 
   return (
     <div className="task-card border p-4 rounded-md shadow-md">
-      <h3 className="text-lg font-bold cursor-pointer">
-        <Link href={`/task/${task._id}`}>{task.name}</Link>
-      </h3>
+      <h3 className="text-lg font-bold cursor-pointer">{task.name}</h3>
       <p>{task.description}</p>
       <p>
         Due:{" "}
