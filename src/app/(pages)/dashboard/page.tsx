@@ -1,7 +1,9 @@
+import TaskMetrics from "@/components/ui/taskMetrics";
+
 export default function DashboardPage() {
   return (
     <div>
-      <h1>Dashboard</h1>
+      <TaskMetrics />
     </div>
   );
 }
